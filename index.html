@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#0a0a14">
+<meta name="description" content="IA on-device no seu celular: modelos ONNX reais do GitHub rodando 100% no navegador, sem servidor.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="css/app.css">
+<title>Neural Pocket — IA on-device</title>
+</head>
+<body>
+
+<div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
+
+<!-- SPLASH -->
+<div id="splash" class="splash">
+  <div class="splash-inner">
+    <div class="logo">
+      <svg viewBox="0 0 48 48" width="64" height="64" aria-hidden="true">
+        <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#7c5cff"/><stop offset="1" stop-color="#22d3ee"/>
+        </linearGradient></defs>
+        <circle cx="24" cy="24" r="21" fill="none" stroke="url(#lg)" stroke-width="2.5" opacity=".5"/>
+        <path d="M24 8v32M8 24h32M13 13l22 22M35 13L13 35" stroke="url(#lg)" stroke-width="1.4" opacity=".55"/>
+        <circle cx="24" cy="24" r="7" fill="url(#lg)" opacity=".9"/>
+      </svg>
+    </div>
+    <h1 class="splash-title">Neural Pocket</h1>
+    <p class="splash-sub">IA on-device · sem servidor · sem upload</p>
+    <div class="boot-bar"><i id="boot-bar"></i></div>
+    <p id="boot-text" class="boot-text">iniciando runtime…</p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="app hidden">
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="dot"></span>
+      <div>
+        <strong>Neural Pocket</strong>
+        <small id="hw-badge">carregando…</small>
+      </div>
+    </div>
+    <button id="btn-info" class="icon-btn" aria-label="Sobre">
+      <svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 11v6M12 7.6v.9" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+    </button>
+  </header>
+
+  <main class="view-wrap">
+
+    <!-- ============ VIEW: DESENHAR ============ -->
+    <section id="view-draw" class="view active">
+      <div class="card">
+        <div class="card-head">
+          <h2>Reconhecer dígito</h2>
+          <span class="tag">MNIST · 2 modelos</span>
+        </div>
+
+        <div class="canvas-shell">
+          <canvas id="draw-canvas" width="280" height="280" aria-label="Área de desenho"></canvas>
+          <div class="canvas-hint" id="canvas-hint">desenhe um dígito de 0 a 9</div>
+          <div class="digits-preview"><canvas id="mini-canvas" width="28" height="28"></canvas><small>como o modelo vê (28×28)</small></div>
+        </div>
+
+        <div class="btn-row">
+          <button id="btn-clear" class="btn ghost">Limpar</button>
+          <button id="btn-predict" class="btn primary">
+            <span class="btn-label">Reconhecer</span>
+            <span class="spinner" hidden></span>
+          </button>
+        </div>
+
+        <div id="draw-results" class="results" hidden></div>
+      </div>
+    </section>
+
+    <!-- ============ VIEW: VISÃO ============ -->
+    <section id="view-vision" class="view">
+      <div class="card">
+        <div class="card-head">
+          <h2>Detecção em imagem</h2>
+          <span class="tag" id="vision-tag">YOLOv8</span>
+        </div>
+
+        <div class="seg" role="tablist" id="vision-seg">
+          <button class="seg-btn active" data-model="yolov8n">Objetos <small>80 cls</small></button>
+          <button class="seg-btn" data-model="yolov8-face">Rostos</button>
+          <button class="seg-btn" data-model="yolov8-head">Cabeças</button>
+        </div>
+
+        <div class="dropzone" id="dropzone">
+          <input type="file" id="file-input" accept="image/*" hidden>
+          <input type="file" id="cam-input" accept="image/*" capture="environment" hidden>
+          <div class="dz-empty" id="dz-empty">
+            <svg viewBox="0 0 24 24" width="34" height="34"><path d="M3 17V7a2 2 0 0 1 2-2h3l1.5-2h5L16 5h3a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12.5" r="3.6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+            <p>Toque para escolher uma foto</p>
+            <div class="dz-actions">
+              <button class="btn tiny" data-pick="file">Galeria</button>
+              <button class="btn tiny" data-pick="cam">Câmera</button>
+            </div>
+          </div>
+          <div class="preview-shell hidden" id="preview-shell">
+            <canvas id="preview-canvas"></canvas>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button id="btn-detect" class="btn primary" disabled>
+            <span class="btn-label">Detectar</span>
+            <span class="spinner" hidden></span>
+          </button>
+        </div>
+
+        <div id="vision-results" class="results"></div>
+      </div>
+    </section>
+
+    <!-- ============ VIEW: MODELOS ============ -->
+    <section id="view-models" class="view">
+      <div class="card">
+        <div class="card-head">
+          <h2>Modelos instalados</h2>
+          <span class="tag">ONNX · GitHub</span>
+        </div>
+        <div id="model-list" class="model-list"></div>
+      </div>
+      <div class="card subtle">
+        <div class="card-head"><h2>Sobre</h2></div>
+        <p class="about">
+          Todos os modelos rodam <strong>dentro do seu aparelho</strong>, via WebAssembly.
+          Nenhuma imagem ou dado sai do dispositivo — não há servidor de inferência.
+          Os pesos são modelos ONNX públicos obtidos de repositórios do GitHub.
+        </p>
+      </div>
+    </section>
+
+  </main>
+
+  <nav class="tabbar">
+    <button class="tab active" data-view="draw">
+      <svg viewBox="0 0 24 24" width="22" height="22"><path d="M4 20l4-1 10-10a2.8 2.8 0 0 0-4-4L4 15z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+      <span>Desenhar</span>
+    </button>
+    <button class="tab" data-view="vision">
+      <svg viewBox="0 0 24 24" width="22" height="22"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6z" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="2.6" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
+      <span>Visão</span>
+    </button>
+    <button class="tab" data-view="models">
+      <svg viewBox="0 0 24 24" width="22" height="22"><rect x="4" y="4" width="16" height="4.4" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.7"/><rect x="4" y="15.6" width="16" height="4.4" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 8.4v7.2M16 8.4v7.2" stroke="currentColor" stroke-width="1.7"/></svg>
+      <span>Modelos</span>
+    </button>
+  </nav>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
